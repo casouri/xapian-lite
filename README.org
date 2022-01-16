@@ -1,0 +1,56 @@
+#+TITLE: Xapian-lite
+
+Xapian-lite is a minimal Emacs dynamic module for Xapian. It provides
+a simple interface that allow you to index files and search for
+phrases. I initially wrote it for my note app [[https://github.com/casouri/xeft][Xeft]].
+
+* Usage
+
+Because it’s so basic, the dynamic module is very easy to use and
+also very flexible. To index files, use
+
+#+begin_src emacs-lisp
+(dolist (file (directory-files "my-note-dir"))
+  (xapian-lite-reindex-file file dbpath))
+#+end_src
+
+This indexes each file in ~my-note-dir~, saving them to the database
+at ~dbpath~. If the database doesn’t exist yet, it is created.
+
+To search for a term, use
+
+#+begin_src emacs-lisp
+(xapian-lite-query-term "search term" dbpath 0 10)
+#+end_src
+
+This returns a list of paths of the files that contains ~search term~,
+ranked by relevance. The ~0~ and ~10~ means “return 10 results
+starting from the 0th place”, it is essentially used for paging. If
+you want all the result, use ~0~ and ~999999~.
+
+When a file is modified, call ~xeft-reindex-file~ again on that file.
+If a file is removed, you don’t need to remove it from the database,
+it will be automatically removed. If the file has been indexed and
+haven’t been modified, ~xeft-reindex-file~ is (kind of) a no-op (i.e.
+fast).
+
+Both file path and database path must be absolute path.
+
+* Building
+
+To build the module, you need to have Xapian installed. On Mac, it can
+be installed with macports by
+
+#+begin_src shell
+sudo port install xapian-core
+#+end_src
+
+Then, build the module by
+
+#+begin_src shell
+make PREFIX=/opt/local
+#+end_src
+
+Here ~/opt/local~ is the default prefix of macports, which is what I
+used to install Xapian. Homebrew and Linux users probably can leave it
+empty.
