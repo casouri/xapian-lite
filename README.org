@@ -60,3 +60,32 @@ make PREFIX=/opt/local
 Here ~/opt/local~ is the default prefix of macports, which is what I
 used to install Xapian. Homebrew and Linux users probably can leave it
 empty.
+
+* Xapian-lite as a dependency
+
+I put pre-built binary for GNU/Linux and macOS in GitHub Releases. If you want to use xapian-lite in your package, you can do something like this:
+
+#+begin_src emacs-lisp
+(defvar xeft--linux-module-url "https://github.com/casouri/xapian-lite/releases/download/v1.0/xapian-lite-amd64-linux.so"
+  "URL for pre-built dynamic module for Linux.")
+
+(defvar xeft--mac-module-url "https://github.com/casouri/xapian-lite/releases/download/v1.0/xapian-lite-amd64-mac.dylib"
+  "URL for pre-built dynamic module for Mac.")
+
+(defun xeft--download-module ()
+  "Download pre-built module from GitHub. Return non-nil if success."
+  (require 'url)
+  (let ((module-path (expand-file-name
+                      "xapian-lite.so"
+                      (file-name-directory
+                       (locate-library "xeft.el" t)))))
+    (cond
+     ((eq system-type 'gnu/linux)
+      (url-copy-file xeft--linux-module-url module-path)
+      t)
+     ((eq system-type 'darwin)
+      (url-copy-file xeft--mac-module-url module-path)
+      t)
+     (t (message "No pre-built module for this operating system. We only have them for GNU/Linux and macOS")
+        nil))))
+#+end_src
