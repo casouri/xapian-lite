@@ -4,6 +4,12 @@ Xapian-lite is a minimal Emacs dynamic module for Xapian. It provides
 a simple interface that allow you to index files and search for
 phrases. I initially wrote it for my note app [[https://github.com/casouri/xeft][Xeft]].
 
+#+begin_src emacs-lisp
+;; Querying my ~40MB worth of notes.
+(benchmark-run 100 (xeft-query-term "common lisp" xeft-database 0 10))
+;;=> (0.031512 0 0.0)
+#+end_src
+
 * Usage
 
 Because it’s so basic, the dynamic module is very easy to use and
