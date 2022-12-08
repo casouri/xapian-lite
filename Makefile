@@ -1,15 +1,24 @@
 .POSIX:
 PREFIX ?= /usr/local
 CXX ?= g++
-CXXFLAGS = -fPIC -I$(PREFIX)/include -std=c++11 -stdlib=libc++
+CXXFLAGS = -fPIC -I$(PREFIX)/include -std=c++11
 LDFLAGS = -L$(PREFIX)/lib
 LDLIBS = -lxapian
 
-xapian-lite.so: xapian-lite.cc
+# Dylib extensions.
+ifeq ($(OS),Windows_NT)
+	SOEXT = dll
+else ifeq ($(shell uname),Darwin)
+	SOEXT = dylib
+else
+	SOEXT = so
+endif
+
+xapian-lite.$(SOEXT): xapian-lite.cc
 	$(CXX) $< -o $@ -shared $(CXXFLAGS) $(LDFLAGS) $(LDLIBS)
 
-xapian-lite.so.stdaln: xapian-lite.cc
-	$(CXX) -o xapian-lite.so -shared $(CXXFLAGS) $< libxapian.a -lz
+standalone: xapian-lite.cc
+	$(CXX) -o xapian-lite.$(SOEXT) -shared $(CXXFLAGS) $< libxapian.a -lz
 
 clean:
 	rm -f *.so *.o
