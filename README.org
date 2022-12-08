@@ -61,6 +61,20 @@ Here ~/opt/local~ is the default prefix of macports, which is what I
 used to install Xapian. Homebrew and Linux users probably can leave it
 empty.
 
+You can also build an standalone module, which doesn’t require xapian dynamic library when running. For that you need to build xapian as a static library. First get the source from https://xapian.org/docs/install.html.
+
+#+begin_src shell
+tar -xf <xapian tarball>
+./configure --disable-shared
+make CPPFLAGS=-fPIC
+#+end_src
+
+Now find =libxapian.a= in =.libs= directory, copy it out into xapian-lite’s project root, and run
+
+#+begin_src shell
+make standalone
+#+end_src
+
 * Xapian-lite as a dependency
 
 I put pre-built binary for GNU/Linux and macOS in GitHub Releases. If you want to use xapian-lite in your package, you can do something like this:
