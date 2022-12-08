@@ -43,17 +43,54 @@ int plugin_is_GPL_compatible;
    plain text.
 
    REF: https://lists.xapian.org/pipermail/xapian-discuss/2021-August/009906.html
- */ 
+
+   To find a Xapian document by a path, we assign each document a
+   special term QV<path>. But since Xapian has a limit on the length of
+   a term, we hash long paths, and the actual term becomes QH<hash>.
+ */
 
 /*** Xapian stuff */
 
+// The index of the document value that stores the mtime.
 static const Xapian::valueno DOC_MTIME = 0;
+// The index of the document value that store the file path.
 static const Xapian::valueno DOC_FILEPATH = 1;
 
 static Xapian::WritableDatabase database;
 static string cached_dbpath = "";
 
 class xapian_lite_cannot_open_file: public exception {};
+
+// Return the hash of KEY.
+static uint64_t
+fingerprint (string key)
+{
+  // Polynomial rolling hash.
+  // http://web.cs.unlv.edu/larmore/Courses/CSC477/F14/Assignments/horners.pdf
+  // https://begriffs.com/posts/2014-03-28-magic-numbers-in-polynomial-hash.html
+  const uint64_t prime = 31;
+  uint64_t hash = 0;
+  for (int idx = 0; idx < key.length(); idx++)
+    {
+      hash = key[idx] + hash * prime; // mod 2^64.
+    }
+  return hash;
+}
+
+// Return the hash string of PATH. The length limit of a term is ~245
+// bytes, but we don’t have to use that as the threshold.
+static string
+hash_path (string path)
+{
+  if (path.length() < 50)
+    {
+      return "QV" + path;
+    }
+  else
+    {
+      return "QH" + to_string (fingerprint (path));
+    }
+}
 
 // Reindex the file at PATH, using database at DBPATH. Throws
 // cannot_open_file. Both path must be absolute. Normally only reindex
@@ -93,7 +130,8 @@ reindex_file
     }
   // Track doc with file path as "id". See
   // https://getting-started-with-xapian.readthedocs.io/en/latest/practical_example/indexing/updating_the_database.html
-  string termID = 'Q' + path;
+  // Also https://trac.xapian.org/wiki/FAQ/UniqueIds
+  string termID = hash_path (path);
   Xapian::PostingIterator it_begin = database.postlist_begin (termID);
   Xapian::PostingIterator it_end = database.postlist_end (termID);
   bool has_doc = it_begin != it_end;
