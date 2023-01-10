@@ -21,4 +21,4 @@ standalone: xapian-lite.cc
 	$(CXX) -o xapian-lite.$(SOEXT) -shared $(CXXFLAGS) $< libxapian.a -lz
 
 clean:
-	rm -f *.so *.o
+	rm -f *.so *.o *.dylib *.dll
