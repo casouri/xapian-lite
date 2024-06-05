@@ -42,6 +42,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "emacs-module.h"
 #include "emacs-module-prelude.h"
 
+#if defined _WIN32
+#include <Windows.h>
+#endif
+
 using namespace std;
 
 int plugin_is_GPL_compatible;
@@ -113,6 +117,37 @@ hash_path (string path)
     }
 }
 
+#ifdef _WIN32
+static std::wstring ConvertUtf8ToWide(const std::string& str)
+{
+    int count = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), str.length(), nullptr, 0);
+    std::wstring wstr(count, 0);
+    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), str.length(), &wstr[0], count);
+    return wstr;
+}
+
+static std::string ConvertWideToANSI(const std::wstring& wstr)
+{
+    int count = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), wstr.length(), nullptr, 0, nullptr, nullptr);
+    std::string str(count, 0);
+    WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, &str[0], count, nullptr, nullptr);
+    return str;
+}
+
+static std::string GetConvertedWindowsPath(const std::string &path)
+{
+    std::string cvtPath = path;
+    // Code pages for reference https://learn.microsoft.com/zh-tw/windows/win32/intl/code-page-identifiers
+    if (65001 != GetACP())
+    {
+        auto wsPath = ConvertUtf8ToWide(path);
+        cvtPath = ConvertWideToANSI(wsPath);
+    }
+
+    return cvtPath;
+}
+#endif
+
 // Reindex the file at PATH, using database at DBPATH. Throws
 // cannot_open_file. Both path must be absolute. Normally only reindex
 // if file has change since last index, if FORCE is true, always
@@ -128,7 +163,13 @@ reindex_file
   struct stat st;
   time_t file_mtime;
   off_t file_size;
+
+#if defined _WIN32
+  auto cvtPath = GetConvertedWindowsPath(path);
+  if (stat (cvtPath.c_str(), &st) == 0)
+#else
   if (stat (path.c_str(), &st) == 0)
+#endif
     {
       file_mtime = st.st_mtime;
       file_size = st.st_size;
