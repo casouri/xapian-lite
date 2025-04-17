@@ -186,6 +186,10 @@ reindex_file
   // modified.
   if (dbpath != cached_dbpath)
     {
+      if (cached_dbpath != "")
+		{
+		  database.close();
+		}
       database = Xapian::WritableDatabase
         (dbpath, Xapian::DB_CREATE_OR_OPEN);
       cached_dbpath = dbpath;
@@ -253,6 +257,10 @@ query_term
   // See reindex_file for the reason for caching the database object.
   if (dbpath != cached_dbpath)
     {
+      if (cached_dbpath != "")
+		{
+		  database.close();
+		}
       database = Xapian::WritableDatabase
         (dbpath, Xapian::DB_CREATE_OR_OPEN);
       cached_dbpath = dbpath;
