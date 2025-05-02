@@ -42,6 +42,10 @@ fast).
 
 Both file path and database path must be absolute path.
 
+Since v2.1, there’s an additional function, ~xapian-lite-close-database~. It closes the connection to the database. This has two effect, one, by closing the connection, another Emacs session can connect to the database; two, any uncommitted change to the database that’s still in memory are committed to disk. For example, Xeft periodically commites DB changes to disk with this function.
+
+Since v2.1, xapian-lite can detect base64 encodings in the file, and skip them when indexing. This prevents the DB size ballooning from indexing base64 strings in the files. If a stretch of text contains only characters used in base64 encoding, and is longer than 70 characters, it it considered base64 text and is skipped when indexing. This will cause xapian-lite to skip some longer urls too, since `/` is used in base64. The length threshold of 70 is hard-coded.
+
 * Building
 
 To build the module, you need to have Xapian installed. On Mac, it can
